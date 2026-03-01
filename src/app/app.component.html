@@ -1,0 +1,17 @@
+
+<router-outlet />
+
+<!-- Global toast container -->
+<div class="toast-container">
+    @for (toast of toastSvc.toasts(); track toast.id) {
+        <div class="toast {{ toast.type }}" role="alert">
+          <span class="toast-icon">
+            @if (toast.type === 'success') { ✓ }
+            @else if (toast.type === 'error') { ✕ }
+            @else { ℹ }
+          </span>
+            <span>{{ toast.message }}</span>
+            <button class="toast-close" (click)="toastSvc.dismiss(toast.id)">×</button>
+        </div>
+    }
+</div>

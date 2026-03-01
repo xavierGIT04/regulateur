@@ -1,0 +1,84 @@
+
+.page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; }
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--success);
+  background: var(--success-light);
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+.countdown-bar {
+  width: 80px;
+  height: 4px;
+  background: var(--gray-200);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.countdown-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 99px;
+  transition: width 1s linear;
+}
+
+/* Stats bar */
+.trafic-stats {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 0;
+  flex-wrap: wrap;
+}
+.trafic-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 16px;
+}
+.trafic-stat-value {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-900);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.trafic-stat-label {
+  display: block;
+  font-size: 11px;
+  color: var(--gray-500);
+  font-weight: 500;
+  margin-top: 2px;
+}
+.trafic-divider { width: 1px; height: 40px; background: var(--gray-200); flex-shrink: 0; }
+
+.course-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--gray-100);
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: var(--gray-600);
+}
+.addr-cell {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  font-size: 12px;
+}

@@ -1,0 +1,102 @@
+
+<div class="shell">
+    <!-- ─── Sidebar ─────────────────────────────────────────── -->
+    <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
+        <div class="sidebar-inner">
+
+            <!-- Logo -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="12" fill="#FF6B00"/>
+                        <path d="M7 14l2-4 3 3 2-5 3 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                @if (!sidebarCollapsed()) {
+                    <div class="brand-text">
+                        <span class="brand-name">ZemExpress</span>
+                        <span class="brand-role">Régulateur</span>
+                    </div>
+                }
+                <button class="collapse-btn" (click)="toggleSidebar()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        @if (sidebarCollapsed()) {
+                            <path d="M9 18l6-6-6-6"/>
+                        } @else {
+                            <path d="M15 18l-6-6 6-6"/>
+                        }
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <span class="nav-section-label">Navigation</span>
+                @for (item of navItems; track item.path) {
+                    <a
+                            class="nav-item"
+                            [routerLink]="item.path"
+                            routerLinkActive="active"
+                            [title]="sidebarCollapsed() ? item.label : ''"
+                    >
+                        <span class="nav-icon" [innerHTML]="item.icon"></span>
+                        @if (!sidebarCollapsed()) {
+                            <span class="nav-label">{{ item.label }}</span>
+                            @if (item.badge) {
+                                <span class="nav-badge">{{ item.badge }}</span>
+                            }
+                        }
+                    </a>
+                }
+            </nav>
+
+            <!-- Spacer -->
+            <div style="flex:1"></div>
+
+            <!-- User profile -->
+            <div class="sidebar-user">
+                <div class="user-avatar">
+                    {{ initials }}
+                </div>
+                @if (!sidebarCollapsed()) {
+                    <div class="user-info">
+                        <span class="user-name">{{ auth.getUsername() }}</span>
+                        <span class="user-role">Régulateur</span>
+                    </div>
+                    <button class="btn btn-ghost btn-icon btn-sm" (click)="auth.logout()" title="Déconnexion">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                        </svg>
+                    </button>
+                }
+            </div>
+        </div>
+    </aside>
+
+    <!-- ─── Main content ─────────────────────────────────────── -->
+    <div class="main-wrap">
+        <!-- Top header -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="live-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="live-text">Tableau de bord actif</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-time">{{ currentTime() }}</div>
+                <button class="btn btn-ghost btn-sm" (click)="auth.logout()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                    Déconnexion
+                </button>
+            </div>
+        </header>
+
+        <!-- Page content -->
+        <main class="page-content">
+            <router-outlet />
+        </main>
+    </div>
+</div>

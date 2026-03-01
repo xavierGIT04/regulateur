@@ -1,0 +1,235 @@
+
+<div class="page animate-fade">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1>Validation KYC</h1>
+            <p class="text-muted mt-1" style="font-size:13px">
+                Examinez et validez les dossiers d'inscription des conducteurs
+            </p>
+        </div>
+        <button class="btn btn-ghost btn-sm" (click)="loadDossiers()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+            </svg>
+            Actualiser
+        </button>
+    </div>
+
+    <!-- Filters + search -->
+    <div class="kyc-toolbar">
+        <div class="filter-tabs">
+            @for (tab of filterTabs; track tab.value) {
+                <button
+                        class="filter-tab"
+                        [class.active]="activeFilter() === tab.value"
+                        (click)="activeFilter.set(tab.value)"
+                >
+                    {{ tab.label }}
+                    @if (tab.count !== undefined) {
+                        <span class="tab-count">{{ tab.count }}</span>
+                    }
+                </button>
+            }
+        </div>
+        <div class="input-wrap" style="min-width:240px">
+          <span class="input-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </span>
+            <input type="text" class="form-control with-icon" placeholder="Rechercher..." [(ngModel)]="search">
+        </div>
+    </div>
+
+    <!-- Loading -->
+    @if (loading()) {
+        <div class="empty-state">
+            <div class="spinner spinner-lg"></div>
+            <p>Chargement des dossiers…</p>
+        </div>
+    } @else if (filtered().length === 0) {
+        <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <h3>Aucun dossier trouvé</h3>
+            <p>Aucun dossier ne correspond à vos critères de recherche</p>
+        </div>
+    } @else {
+        <!-- KYC Grid -->
+        <div class="kyc-grid">
+            @for (d of filtered(); track d.conducteurId) {
+                <div class="kyc-card" [class.validated]="d.estValideParAdmin">
+                    <!-- Card header -->
+                    <div class="kyc-card-header">
+                        <div class="flex items-center gap-3">
+                            <div class="avatar avatar-md" [style.background]="avatarColor(d.nom)" style="color:#fff;font-weight:700">
+                                {{ initials(d.nom, d.prenom) }}
+                            </div>
+                            <div>
+                                <div class="font-semibold" style="color:var(--gray-900)">{{ d.prenom }} {{ d.nom }}</div>
+                                <div class="text-muted text-sm">{{ d.telephone }}</div>
+                            </div>
+                        </div>
+                        <span class="badge" [class]="d.estValideParAdmin ? 'badge-success' : 'badge-warning'">
+                  {{ d.estValideParAdmin ? 'Validé' : 'En attente' }}
+                </span>
+                    </div>
+
+                    <!-- Info grid -->
+                    <div class="kyc-info">
+                        <div class="info-item">
+                            <span class="info-label">Permis N°</span>
+                            <span class="info-value">{{ d.numeroPermis ?? '—' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Immatriculation</span>
+                            <span class="info-value">{{ d.immatriculation ?? '—' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Type véhicule</span>
+                            <span class="info-value">
+                    <span class="badge badge-sm" [class]="d.typeVehicule === 'TAXI' ? 'badge-info' : 'badge-gray'">
+                      {{ d.typeVehicule ?? '—' }}
+                    </span>
+                  </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Note</span>
+                            <span class="info-value">{{ d.noteMoyenne ? d.noteMoyenne.toFixed(1) + ' ★' : '—' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Photos -->
+                    @if (d.photoPermis || d.photoCni || d.photoVehicule) {
+                        <div class="kyc-photos">
+                            <span class="info-label" style="display:block;margin-bottom:8px">Pièces justificatives</span>
+                            <div class="photos-row">
+                                @if (d.photoProfil) {
+                                    <div class="photo-item" (click)="openPhoto(d.photoProfil!, 'Photo profil')">
+                                        <img [src]="d.photoProfil" alt="Profil" class="photo-thumb" onerror="this.style.display='none'"/>
+                                        <span class="photo-label">Profil</span>
+                                    </div>
+                                }
+                                @if (d.photoPermis) {
+                                    <div class="photo-item" (click)="openPhoto(d.photoPermis!, 'Permis de conduire')">
+                                        <img [src]="d.photoPermis" alt="Permis" class="photo-thumb" onerror="this.style.display='none'"/>
+                                        <span class="photo-label">Permis</span>
+                                    </div>
+                                }
+                                @if (d.photoCni) {
+                                    <div class="photo-item" (click)="openPhoto(d.photoCni!, 'CNI')">
+                                        <img [src]="d.photoCni" alt="CNI" class="photo-thumb" onerror="this.style.display='none'"/>
+                                        <span class="photo-label">CNI</span>
+                                    </div>
+                                }
+                                @if (d.photoVehicule) {
+                                    <div class="photo-item" (click)="openPhoto(d.photoVehicule!, 'Véhicule')">
+                                        <img [src]="d.photoVehicule" alt="Véhicule" class="photo-thumb" onerror="this.style.display='none'"/>
+                                        <span class="photo-label">Véhicule</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Actions -->
+                    @if (!d.estValideParAdmin) {
+                        <div class="kyc-actions">
+                            <button
+                                    class="btn btn-success btn-sm flex-1"
+                                    [disabled]="processingId() === d.conducteurId"
+                                    (click)="approuver(d)"
+                            >
+                                @if (processingId() === d.conducteurId && actionType() === 'approve') {
+                                    <span class="spinner spinner-sm" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></span>
+                                } @else {
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="20,6 9,17 4,12"/>
+                                    </svg>
+                                }
+                                Approuver
+                            </button>
+                            <button
+                                    class="btn btn-danger btn-sm flex-1"
+                                    [disabled]="processingId() === d.conducteurId"
+                                    (click)="openReject(d)"
+                            >
+                                @if (processingId() === d.conducteurId && actionType() === 'reject') {
+                                    <span class="spinner spinner-sm" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></span>
+                                } @else {
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                }
+                                Rejeter
+                            </button>
+                        </div>
+                    } @else {
+                        <div class="kyc-validated-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="20,6 9,17 4,12"/>
+                            </svg>
+                            Dossier validé
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Reject modal -->
+    @if (showRejectModal()) {
+        <div class="modal-backdrop" (click)="closeModals()">
+            <div class="modal" (click)="$event.stopPropagation()">
+                <div class="modal-header">
+                    <div>
+                        <h3>Rejeter le dossier</h3>
+                        <p class="text-muted mt-1" style="font-size:13px">
+                            {{ rejectTarget()?.prenom }} {{ rejectTarget()?.nom }}
+                        </p>
+                    </div>
+                    <button class="btn btn-ghost btn-icon btn-sm" (click)="closeModals()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Motif du rejet <span style="color:var(--danger)">*</span></label>
+                        <textarea
+                                class="form-control"
+                                rows="4"
+                                placeholder="Expliquez la raison du rejet (documents manquants, données incorrectes…)"
+                                [(ngModel)]="rejectMotif"
+                        ></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-ghost" (click)="closeModals()">Annuler</button>
+                    <button
+                            class="btn btn-danger"
+                            [disabled]="!rejectMotif.trim() || processingId() !== null"
+                            (click)="confirmerRejet()"
+                    >
+                        @if (processingId() !== null) {
+                            <span class="spinner spinner-sm" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></span>
+                        }
+                        Confirmer le rejet
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Photo lightbox -->
+    @if (lightboxUrl()) {
+        <div class="modal-backdrop" (click)="lightboxUrl.set(null)">
+            <div style="position:relative;max-width:800px;width:100%;text-align:center">
+                <div style="color:#fff;font-size:14px;margin-bottom:12px;font-weight:600">{{ lightboxTitle() }}</div>
+                <img [src]="lightboxUrl()!" alt="Document" style="max-width:100%;max-height:80vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)"/>
+                <button
+                        class="btn"
+                        style="position:absolute;top:-40px;right:0;background:rgba(255,255,255,.15);color:#fff;border:none"
+                        (click)="lightboxUrl.set(null)"
+                >✕ Fermer</button>
+            </div>
+        </div>
+    }
+</div>

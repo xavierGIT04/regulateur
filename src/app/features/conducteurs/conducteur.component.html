@@ -1,0 +1,201 @@
+
+
+<div class="page animate-fade">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1>Gestion des conducteurs</h1>
+            <p class="text-muted mt-1" style="font-size:13px">Bloquez ou débloquez les conducteurs de la plateforme</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" (click)="loadConducteurs()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+            </svg>
+            Actualiser
+        </button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="filter-tabs">
+            @for (tab of filterTabs; track tab.value) {
+                <button class="filter-tab" [class.active]="activeFilter() === tab.value" (click)="activeFilter.set(tab.value)">
+                    {{ tab.label }}
+                    <span class="tab-count">{{ tab.count }}</span>
+                </button>
+            }
+        </div>
+        <div class="toolbar-right">
+            <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </span>
+                <input class="form-control with-icon" type="text" placeholder="Rechercher un conducteur..." [(ngModel)]="search">
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    @if (loading()) {
+        <div class="empty-state">
+            <div class="spinner spinner-lg"></div>
+            <p>Chargement des conducteurs…</p>
+        </div>
+    } @else if (filtered().length === 0) {
+        <div class="empty-state">
+            <div class="empty-icon">👤</div>
+            <h3>Aucun conducteur trouvé</h3>
+            <p>Aucun conducteur ne correspond à vos critères</p>
+        </div>
+    } @else {
+        <div class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Conducteur</th>
+                        <th>Téléphone</th>
+                        <th>Véhicule</th>
+                        <th>Note</th>
+                        <th>Courses</th>
+                        <th>Statut</th>
+                        <th>Validation</th>
+                        <th style="text-align:right">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        @for (c of filtered(); track c.conducteurId) {
+                            <tr [class.row-blocked]="c.statutService === 'BLOQUE'">
+                                <td>
+                                    <div class="flex items-center gap-3">
+                                        <div class="avatar avatar-sm" [style.background]="avatarColor(c.nom)" style="color:#fff;font-weight:700">
+                                            {{ initials(c.nom, c.prenom) }}
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold" style="font-size:13px">{{ c.prenom }} {{ c.nom }}</div>
+                                            <div class="text-muted text-xs">#{{ c.conducteurId }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-muted">{{ c.telephone }}</td>
+                                <td>
+                                    <div>
+                                        <div style="font-size:12px;font-weight:500">{{ c.immatriculation ?? '—' }}</div>
+                                        @if (c.typeVehicule) {
+                                            <span class="badge badge-sm" [class]="c.typeVehicule === 'TAXI' ? 'badge-info' : 'badge-gray'">
+                            {{ c.typeVehicule }}
+                          </span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (c.noteMoyenne) {
+                                        <div class="rating">
+                                            <span class="rating-star">★</span>
+                                            <span class="rating-value">{{ c.noteMoyenne.toFixed(1) }}</span>
+                                        </div>
+                                    } @else {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="font-medium">{{ c.totalCourses ?? 0 }}</td>
+                                <td>
+                      <span class="badge" [class]="statutServiceBadge(c.statutService)">
+                        {{ c.statutService ?? 'HORS_LIGNE' }}
+                      </span>
+                                </td>
+                                <td>
+                      <span class="badge" [class]="c.estValideParAdmin ? 'badge-success' : 'badge-warning'">
+                        {{ c.estValideParAdmin ? 'Validé' : 'En attente' }}
+                      </span>
+                                </td>
+                                <td>
+                                    <div class="flex items-center gap-2" style="justify-content:flex-end">
+                                        @if (c.statutService === 'BLOQUE') {
+                                            <button
+                                                    class="btn btn-success btn-sm"
+                                                    [disabled]="processingId() === c.conducteurId"
+                                                    (click)="debloquer(c)"
+                                            >
+                                                @if (processingId() === c.conducteurId) {
+                                                    <span class="spinner spinner-sm" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></span>
+                                                } @else {
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                                        <path d="M7 11V7a5 5 0 019.9-1"/>
+                                                    </svg>
+                                                }
+                                                Débloquer
+                                            </button>
+                                        } @else {
+                                            <button
+                                                    class="btn btn-danger btn-sm"
+                                                    [disabled]="processingId() === c.conducteurId"
+                                                    (click)="openBlockModal(c)"
+                                            >
+                                                @if (processingId() === c.conducteurId) {
+                                                    <span class="spinner spinner-sm" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></span>
+                                                } @else {
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                                        <path d="M7 11V7a5 5 0 0110 0v4"/>
+                                                    </svg>
+                                                }
+                                                Bloquer
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-footer flex items-center justify-between">
+                <span class="text-muted text-sm">{{ filtered().length }} conducteur(s) affiché(s)</span>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Block confirmation modal -->
+@if (showBlockModal()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <h3>Bloquer un conducteur</h3>
+                    <p class="text-muted mt-1" style="font-size:13px">
+                        {{ blockTarget()?.prenom }} {{ blockTarget()?.nom }} · {{ blockTarget()?.telephone }}
+                    </p>
+                </div>
+                <button class="btn btn-ghost btn-icon btn-sm" (click)="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning" style="margin-bottom:16px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Ce conducteur ne pourra plus accepter de courses sur la plateforme.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Motif du blocage (optionnel)</label>
+                    <textarea class="form-control" rows="3" placeholder="Comportement inapproprié, plainte client…" [(ngModel)]="blockMotif"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" (click)="closeModal()">Annuler</button>
+                <button class="btn btn-danger" [disabled]="processingId() !== null" (click)="confirmerBlocage()">
+                    @if (processingId() !== null) {
+                        <span class="spinner spinner-sm" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></span>
+                    }
+                    Confirmer le blocage
+                </button>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,196 @@
+
+
+<div class="page animate-fade">
+    <!-- Page header -->
+    <div class="page-header">
+        <div>
+            <h1>Tableau de bord</h1>
+            <p class="text-muted mt-1" style="font-size:13px">Vue d'ensemble de la plateforme · {{ today | date:'EEEE d MMMM yyyy':'':'fr' }}</p>
+        </div>
+        <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" (click)="refresh()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [style.animation]="loading() ? 'spin .65s linear infinite' : 'none'">
+                    <path d="M23 4v6h-6M1 20v-6h6"/>
+                    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                </svg>
+                Actualiser
+            </button>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--info-light);color:var(--info)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/>
+                </svg>
+            </div>
+            <div class="stat-body">
+                <span class="stat-label">Courses en cours</span>
+                <div class="stat-value">{{ traffic()?.coursesEnCours ?? '—' }}</div>
+                <span class="stat-sub">
+              <span class="pulse-dot" style="display:inline-block"></span>
+              Temps réel
+            </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--warning-light);color:var(--warning)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
+            <div class="stat-body">
+                <span class="stat-label">En attente</span>
+                <div class="stat-value">{{ traffic()?.coursesEnAttente ?? '—' }}</div>
+                <span class="stat-sub" style="color:var(--warning)">Courses non assignées</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--success-light);color:var(--success)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                </svg>
+            </div>
+            <div class="stat-body">
+                <span class="stat-label">Conducteurs disponibles</span>
+                <div class="stat-value">{{ traffic()?.conducteursDispo ?? '—' }}</div>
+                <span class="stat-sub" style="color:var(--success)">En ligne maintenant</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--primary-light);color:var(--primary)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                </svg>
+            </div>
+            <div class="stat-body">
+                <span class="stat-label">Courses terminées aujourd'hui</span>
+                <div class="stat-value">{{ traffic()?.coursesTermineesAujourdhui ?? '—' }}</div>
+                <span class="stat-sub">
+              {{ traffic()?.gainsTotauxAujourdhui | currency:'XOF':'symbol':'1.0-0' }} générés
+            </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second row: KYC queue + recent courses -->
+    <div class="dashboard-grid">
+
+        <!-- KYC en attente -->
+        <div class="card">
+            <div class="card-header">
+                <div class="flex items-center gap-2">
+                    <h3>Dossiers KYC en attente</h3>
+                    @if (kycPending().length > 0) {
+                        <span class="badge badge-warning">{{ kycPending().length }}</span>
+                    }
+                </div>
+                <a routerLink="/kyc" class="btn btn-ghost btn-sm">Voir tout →</a>
+            </div>
+            <div class="table-wrap">
+                @if (loadingKyc()) {
+                    <div class="empty-state">
+                        <div class="spinner spinner-lg"></div>
+                    </div>
+                } @else if (kycPending().length === 0) {
+                    <div class="empty-state">
+                        <div class="empty-icon">✓</div>
+                        <h3>File vide</h3>
+                        <p>Aucun dossier KYC en attente de validation</p>
+                    </div>
+                } @else {
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Conducteur</th>
+                            <th>Type</th>
+                            <th>Téléphone</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            @for (k of kycPending().slice(0, 5); track k.conducteurId) {
+                                <tr>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            <div class="avatar avatar-sm" [style.background]="avatarColor(k.nom)">
+                                                {{ initials(k.nom, k.prenom) }}
+                                            </div>
+                                            <span class="font-medium">{{ k.prenom }} {{ k.nom }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                        <span class="badge" [class]="k.typeVehicule === 'TAXI' ? 'badge-info' : 'badge-gray'">
+                          {{ k.typeVehicule ?? '—' }}
+                        </span>
+                                    </td>
+                                    <td class="text-muted">{{ k.telephone }}</td>
+                                    <td>
+                                        <a routerLink="/kyc" class="btn btn-primary btn-sm">Examiner</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+
+        <!-- Courses actives -->
+        <div class="card">
+            <div class="card-header">
+                <div class="flex items-center gap-2">
+                    <h3>Courses actives</h3>
+                    <span class="badge badge-success">Live</span>
+                </div>
+                <a routerLink="/trafic" class="btn btn-ghost btn-sm">Détails →</a>
+            </div>
+            <div class="table-wrap">
+                @if (loading()) {
+                    <div class="empty-state">
+                        <div class="spinner spinner-lg"></div>
+                    </div>
+                } @else if (!traffic()?.coursesActives?.length) {
+                    <div class="empty-state">
+                        <div class="empty-icon">🚕</div>
+                        <h3>Aucune course active</h3>
+                        <p>Aucune course en cours pour le moment</p>
+                    </div>
+                } @else {
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Conducteur</th>
+                            <th>Statut</th>
+                            <th>Prix</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            @for (c of traffic()!.coursesActives.slice(0, 5); track c.courseId) {
+                                <tr>
+                                    <td class="font-medium text-muted">#{{ c.courseId }}</td>
+                                    <td>{{ c.conducteurNom ?? '—' }}</td>
+                                    <td>
+                        <span class="badge" [class]="statutBadge(c.statut)">
+                          {{ c.statut }}
+                        </span>
+                                    </td>
+                                    <td class="font-medium">
+                                        {{ (c.prixFinal ?? c.prixEstime ?? 0) | currency:'XOF':'symbol':'1.0-0' }}
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>

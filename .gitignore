@@ -1,0 +1,43 @@
+# Sorties de compilation
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Cache Angular (essentiel pour v13+)
+/.angular/cache
+
+# Dépendances
+/node_modules
+
+# Logs
+npm-debug.log
+yarn-error.log
+testem.log
+
+# IDEs et Editeurs
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Configuration Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Divers
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+/typings
+
+# Fichiers Système
+.DS_Store
+Thumbs.db
