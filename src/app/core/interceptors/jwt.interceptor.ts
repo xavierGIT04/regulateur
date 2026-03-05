@@ -1,25 +1,41 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth   = inject(AuthService);
-  const router = inject(Router);
-  const token  = auth.getToken();
+    const auth   = inject(AuthService);
+    const router = inject(Router);
+    const token  = auth.getToken();
 
-  const authReq = token && !req.url.includes('/auth/')
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+    //  Liste des URLs qui n'ont PAS besoin du token
+    const isPublicUrl = req.url.includes('/api/v1/auth/authenticate')
+        || req.url.includes('/api/v1/auth/register')
+        || req.url.includes('/api/v1/auth/demander-otp')
+        || req.url.includes('/api/v1/auth/verifier-otp')
+        || req.url.includes('/api/v1/auth/refresh-token');
 
-  return next(authReq).pipe(
-    catchError((err: HttpErrorResponse) => {
-      if (err.status === 401 || err.status === 403) {
-        auth.logout();
-        router.navigate(['/login']);
-      }
-      return throwError(() => err);
-    })
-  );
+    let authReq: HttpRequest<unknown> = req;
+
+    //  Attache le token sur toutes les requêtes non-publiques
+    if (token && !isPublicUrl) {
+        authReq = req.clone({
+            setHeaders: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+    }
+
+    return next(authReq).pipe(
+        catchError((err: HttpErrorResponse) => {
+            if (err.status === 401) {
+                // Token expiré ou invalide → déconnexion
+                auth.logout();
+                router.navigate(['/login']);
+            }
+            // 403 = authentifié mais pas le bon rôle → on ne déconnecte pas
+            return throwError(() => err);
+        })
+    );
 };
